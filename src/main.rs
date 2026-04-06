@@ -1,23 +1,22 @@
 #![windows_subsystem = "windows"]
 
-mod state;
-mod scanner;
-mod wallpaper;
 mod config;
+mod scanner;
+mod state;
+mod wallpaper;
 
-use state::AppState;
-use scanner::load_images_from_dirs;
-use wallpaper::apply_wallpaper;
 use config::load_dirs;
+use scanner::load_images_from_dirs;
+use state::AppState;
+use wallpaper::apply_wallpaper;
 
+use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use std::process::Command;
 
-use tray_item::{IconSource, TrayItem};
 use std::path::PathBuf;
-
+use tray_item::{IconSource, TrayItem};
 
 fn get_config_path() -> PathBuf {
     // 1️⃣ exe 同目录（生产环境）
@@ -45,7 +44,7 @@ fn main() {
 
     let images = load_images_from_dirs(&dirs);
 
-  let state = Arc::new(Mutex::new(AppState::new(images)));
+    let state = Arc::new(Mutex::new(AppState::new(images)));
 
     // 自动循环线程
     {
@@ -59,7 +58,7 @@ fn main() {
                         apply_wallpaper(&s);
                     }
                 }
-                thread::sleep(Duration::from_secs(10));
+                thread::sleep(Duration::from_secs(5));
             }
         });
     }
@@ -72,7 +71,8 @@ fn main() {
         tray.add_menu_item("自动循环", move || {
             let mut s = s.lock().unwrap();
             s.auto = true;
-        }).unwrap();
+        })
+        .unwrap();
     }
 
     // 停止循环
@@ -81,7 +81,8 @@ fn main() {
         tray.add_menu_item("停止循环", move || {
             let mut s = s.lock().unwrap();
             s.auto = false;
-        }).unwrap();
+        })
+        .unwrap();
     }
 
     // 上一张
@@ -91,7 +92,8 @@ fn main() {
             let mut s = s.lock().unwrap();
             s.prev();
             apply_wallpaper(&s);
-        }).unwrap();
+        })
+        .unwrap();
     }
 
     // 下一张
@@ -101,7 +103,8 @@ fn main() {
             let mut s = s.lock().unwrap();
             s.next();
             apply_wallpaper(&s);
-        }).unwrap();
+        })
+        .unwrap();
     }
 
     // 打开第一个目录（默认）
@@ -111,13 +114,15 @@ fn main() {
             if !dir.is_empty() {
                 let _ = Command::new("explorer").arg(&dir).spawn();
             }
-        }).unwrap();
+        })
+        .unwrap();
     }
 
     // 退出
     tray.add_menu_item("退出", || {
         std::process::exit(0);
-    }).unwrap();
+    })
+    .unwrap();
 
     loop {
         thread::sleep(Duration::from_secs(1));
