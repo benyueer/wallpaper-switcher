@@ -1,0 +1,18 @@
+[package]
+name = "paper-change"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+
+[dependencies]
+tray-item = "0.8"
+wallpaper = "3.2"
+walkdir = "2.5"
+anyhow = "1.0"
+
+[build-dependencies]
+winres = "0.1"
+
+[profile.release]
+windows-subsystem = "windows"
