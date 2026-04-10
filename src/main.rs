@@ -85,6 +85,8 @@ fn main() {
                     match worker_rx.recv_timeout(dur) {
                         Ok(_) => {
                             // 收到设置变更信号，跳过等待立刻重新计算 dur
+                            // 消耗积压的所有信号，确保定时器重新起步
+                            while let Ok(_) = worker_rx.try_recv() {}
                         }
                         Err(mpsc::RecvTimeoutError::Timeout) => {
                             let mut s = state_clone.lock().unwrap();
@@ -98,7 +100,9 @@ fn main() {
                 } else {
                     // 如果关闭循坏，一直阻塞等待设置变更信号
                     match worker_rx.recv() {
-                        Ok(_) => {}
+                        Ok(_) => {
+                            while let Ok(_) = worker_rx.try_recv() {}
+                        },
                         Err(_) => break,
                     }
                 }
@@ -224,11 +228,13 @@ fn main() {
                     s.play_order = PlayOrder::Sequential;
                     order_seq.set_checked(true);
                     order_rand.set_checked(false);
+                    let _ = worker_tx.send(());
                 } else if id == order_rand.id() {
                     let mut s = state.lock().unwrap();
                     s.play_order = PlayOrder::Random;
                     order_seq.set_checked(false);
                     order_rand.set_checked(true);
+                    let _ = worker_tx.send(());
                 } else if id == refresh_btn.id() {
                     let config_path = get_config_path();
                     let abs_path = std::fs::canonicalize(&config_path).unwrap_or(config_path.clone());
